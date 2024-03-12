@@ -13,10 +13,16 @@ const wss = new WebSocket.Server({server})
 const clients = [];
 
 wss.on('connection', function connection(ws) {
-    const username = `User ${clients.length + 1}`;
+    const username = `User${clients.length + 1}`;
 
-    console.log("WS connection arrived");
+    console.log("WS connection arrived", username);
     clients.push({name: username,ws});
+
+    clients.forEach(client => {
+        if (client.ws.readyState === WebSocket.OPEN) {
+            client.ws.send(`------- ${username} joined the chat. -------`);
+        }
+    });
 
     ws.on('message', function incoming(message) {
         console.log('received: %s', message);
@@ -36,8 +42,13 @@ wss.on('connection', function connection(ws) {
             console.log(`Client ${username} disconnected`);
             // clients.ws.send(`------------ Client ${username} disconnected ------------`);
         }
-    });
 
+        clients.forEach(client => {
+            if (client.ws.readyState === WebSocket.OPEN) {
+                client.ws.send(`------------ ${username} left the chat. ------------`);
+            }
+        });
+    });
     ws.send('Websocket server connected!')
 });
 
